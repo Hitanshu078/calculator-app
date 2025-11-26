@@ -1,0 +1,4 @@
+# Add your Python dependencies here
+# Example:
+# flask==2.1.2
+# pytest==7.1.2

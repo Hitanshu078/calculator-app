@@ -1,49 +1,73 @@
 pipeline {
     agent any
-    
-    // ADD THIS SECTION
-    tools {
-        // The name must match exactly what you entered in Step 1 (e.g., 'Maven3')
-        maven 'Maven3' 
+
+    environment {
+        IMAGE = "hitanshu078/calculator-app:latest"
+        VENV = ".venv"
+        PYTHON = "/usr/bin/python3" 
     }
 
     stages {
-        stage('Clone Code') {
+
+                stage('Checkout') {
+                        steps {
+                                checkout([$class: 'GitSCM',
+                                    branches: [[name: '*/main']],
+                                    userRemoteConfigs: [[
+                                        url: 'https://github.com/Hitanshu078/calculator-app',
+                                        credentialsId: 'gitcreds'
+                                    ]]
+                                ])
+                        }
+                }
+
+        stage('Create Virtual Environment') {
             steps {
-                // Your git steps are already working fine
-                git branch: 'main', url: 'https://github.com/Hitanshu078/calculator-app.git'
+                sh '$PYTHON -m venv $VENV'
+                sh '$VENV/bin/pip install --upgrade pip'
             }
         }
-        stage('Build with Maven') {
+
+        stage('Install Dependencies') {
             steps {
-                // Now 'mvn' will work because the tool is loaded
-                bat 'mvn clean package'
+                sh '$VENV/bin/pip install -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat 'mvn test'
+                sh '$VENV/bin/pytest -v'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                script {
-                    docker.build("hitanshu078/calculator-app")
-                }
+                sh 'docker build -t $IMAGE .'
             }
         }
 
-
-        stage('Push to DockerHub') {
+        stage('Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    bat "docker login -u %USER% -p %PASS%"
-                    bat "docker push hitanshu078/calculator-app:latest"
+                withCredentials([usernamePassword(credentialsId: 'dockerhub',
+                                                  usernameVariable: 'USER',
+                                                  passwordVariable: 'PASS')]) {
+                    sh '''
+                      echo $PASS | docker login -u $USER --password-stdin
+                      docker push $IMAGE
+                    '''
                 }
             }
         }
 
+        stage('Deploy Container') {
+            steps {
+                sh '''
+                  docker pull $IMAGE
+                  docker stop ci-cd-demo || true
+                  docker rm ci-cd-demo || true
+                  docker run -d -p 5000:5000 --name ci-cd-demo $IMAGE
+                '''
+            }
+        }
     }
 }
