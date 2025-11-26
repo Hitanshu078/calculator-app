@@ -5,7 +5,7 @@ pipeline {
 
         stage('Clone Code') {
             steps {
-                git branch: 'main', url: 'https://github.com/YOUR_USERNAME/YOUR_REPO.git'
+                git branch: 'main', url: 'https://github.com/Hitanshu078/calculator-app.git'
             }
         }
 
@@ -24,7 +24,7 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("rollnumber/calculator-app:latest")
+                    dockerImage = docker.build("IMT2023100/calculatoś-app:latest")
                 }
             }
         }
