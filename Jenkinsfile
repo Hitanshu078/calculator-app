@@ -4,7 +4,7 @@ pipeline {
     environment {
         IMAGE = "hitanshu078/calculator-app:latest"
         VENV = ".venv"
-        PYTHON = "/usr/bin/python3" 
+        PYTHON = "python" 
     }
 
     stages {
@@ -23,26 +23,26 @@ pipeline {
 
         stage('Create Virtual Environment') {
             steps {
-                sh '$PYTHON -m venv $VENV'
-                sh '$VENV/bin/pip install --upgrade pip'
+                bat 'python -m venv %VENV%'
+                bat '%VENV%\Scripts\pip install --upgrade pip'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh '$VENV/bin/pip install -r requirements.txt'
+                bat '%VENV%\Scripts\pip install -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
-                sh '$VENV/bin/pytest -v'
+                bat '%VENV%\Scripts\pytest -v'
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $IMAGE .'
+                bat 'docker build -t %IMAGE% .'
             }
         }
 
@@ -51,22 +51,18 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub',
                                                   usernameVariable: 'USER',
                                                   passwordVariable: 'PASS')]) {
-                    sh '''
-                      echo $PASS | docker login -u $USER --password-stdin
-                      docker push $IMAGE
-                    '''
+                    bat 'echo %PASS% | docker login -u %USER% --password-stdin'
+                    bat 'docker push %IMAGE%'
                 }
             }
         }
 
         stage('Deploy Container') {
             steps {
-                sh '''
-                  docker pull $IMAGE
-                  docker stop ci-cd-demo || true
-                  docker rm ci-cd-demo || true
-                  docker run -d -p 5000:5000 --name ci-cd-demo $IMAGE
-                '''
+                bat 'docker pull %IMAGE%'
+                bat 'docker stop ci-cd-demo || exit 0'
+                bat 'docker rm ci-cd-demo || exit 0'
+                bat 'docker run -d -p 5000:5000 --name ci-cd-demo %IMAGE%'
             }
         }
     }
