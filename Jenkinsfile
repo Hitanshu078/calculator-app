@@ -30,19 +30,20 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    dockerImage = docker.build("IMT2023100/calculatoś-app:latest")
+                    docker.build("hitanshu078/calculator-app")
                 }
             }
         }
 
-        stage('Pubat to DockerHub') {
+
+        stage('Push to DockerHub') {
             steps {
-                script {
-                    docker.withRegistry('https://index.docker.io/v1/', 'dockerhub-creds') {
-                        dockerImage.pubat()
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    bat "docker login -u %USER% -p %PASS%"
+                    bat "docker push hitanshu078/calculator-app:latest"
                 }
             }
         }
+
     }
 }
