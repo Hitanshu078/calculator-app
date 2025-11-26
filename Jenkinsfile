@@ -24,19 +24,19 @@ pipeline {
         stage('Create Virtual Environment') {
             steps {
                 bat 'python -m venv %VENV%'
-                bat '%VENV%\Scripts\pip install --upgrade pip'
+                bat '%VENV%/Scripts/pip install --upgrade pip'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                bat '%VENV%\Scripts\pip install -r requirements.txt'
+                bat '%VENV%/Scripts/pip install -r requirements.txt'
             }
         }
 
         stage('Run Tests') {
             steps {
-                bat '%VENV%\Scripts\pytest -v'
+                bat '%VENV%/Scripts/pytest -v'
             }
         }
 
